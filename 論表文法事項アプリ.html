@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>高校英語 [論理・表現] 文法討伐クエスト</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --bg: #0b1329;
+      --panel-bg: #1e293b;
+      --text: #f8fafc;
+      --text-sub: #94a3b8;
+      --border: #334155;
+      --hp-green: #22c55e;
+      --hp-yellow: #eab308;
+      --hp-red: #ef4444;
+      --accent: #38bdf8;
+      --hint: #8b5cf6;
+    }
+
+    * {
+      box-sizing: border-box;
+      touch-action: manipulation;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body {
+      margin: 0;
+      padding: 16px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 820px;
+      background: var(--panel-bg);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .screen {
+      display: none;
+    }
+    .screen.active {
+      display: block;
+    }
+
+    /* 選択画面 */
+    .title-banner {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    .title-banner h1 {
+      font-size: 1.8rem;
+      margin: 0 0 8px 0;
+      color: var(--accent);
+    }
+    .stage-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+    }
+    @media (min-width: 600px) {
+      .stage-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+    .stage-card {
+      background: #0f172a;
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      transition: transform 0.15s, border-color 0.15s;
+    }
+    .stage-card:active {
+      transform: scale(0.98);
+      border-color: var(--accent);
+    }
+    .stage-card .monster-icon {
+      font-size: 2.6rem;
+      flex-shrink: 0;
+    }
+    .stage-card-info h3 {
+      margin: 0 0 4px 0;
+      font-size: 1.1rem;
+    }
+    .stage-card-info p {
+      margin: 0;
+      font-size: 0.85rem;
+      color: var(--text-sub);
+    }
+
+    /* バトル画面 */
+    .battle-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      background: #0f172a;
+      padding: 10px 16px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+    .turn-counter {
+      font-weight: 700;
+      color: #fbbf24;
+      font-size: 1.05rem;
+    }
+
+    .boss-area {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .boss-avatar {
+      font-size: 4.5rem;
+      line-height: 1;
+      margin-bottom: 8px;
+      display: inline-block;
+      transition: transform 0.2s;
+    }
+    .boss-avatar.damage {
+      animation: shake 0.3s ease-in-out;
+    }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-8px) rotate(-4deg); }
+      75% { transform: translateX(8px) rotate(4deg); }
+    }
+    .boss-name {
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .hp-container {
+      width: 100%;
+      height: 18px;
+      background: #334155;
+      border-radius: 999px;
+      overflow: hidden;
+      margin-bottom: 6px;
+    }
+    .hp-bar {
+      height: 100%;
+      width: 100%;
+      background: var(--hp-green);
+      transition: width 0.3s ease-in-out, background-color 0.3s;
+    }
+    .hp-text {
+      font-size: 0.9rem;
+      color: var(--text-sub);
+      font-weight: 600;
+    }
+
+    .prompt-box {
+      background-color: #0f172a;
+      border-left: 5px solid var(--accent);
+      padding: 14px 16px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      position: relative;
+    }
+    .japanese-text {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin: 0;
+      line-height: 1.5;
+    }
+
+    /* ヒント枠 */
+    .hint-box {
+      display: none;
+      background-color: #2e1065;
+      border: 1px solid #7c3aed;
+      color: #ddd6fe;
+      padding: 12px 14px;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+    .hint-box.show {
+      display: block;
+    }
+
+    .section-label {
+      font-size: 0.8rem;
+      color: var(--text-sub);
+      text-transform: uppercase;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .drop-zone {
+      min-height: 64px;
+      border: 2px dashed #475569;
+      border-radius: 10px;
+      padding: 8px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 16px;
+      background-color: #090d16;
+    }
+
+    .sentence-end-mark {
+      font-size: 1.5rem;
+      font-weight: 900;
+      color: var(--text-sub);
+      padding: 0 4px;
+      line-height: 1;
+    }
+
+    .word-bank {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      min-height: 64px;
+      padding: 8px;
+      margin-bottom: 20px;
+      background: #0f172a;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+
+    .chip {
+      background-color: #1e293b;
+      border: 1px solid #475569;
+      color: #f8fafc;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 1.15rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      transition: transform 0.1s;
+    }
+    .chip:active {
+      transform: scale(0.95);
+    }
+    .drop-zone .chip {
+      background-color: #1d4ed8;
+      border-color: #60a5fa;
+    }
+    .drop-zone .chip.chip-correct {
+      background-color: #15803d;
+      border-color: #4ade80;
+    }
+    .drop-zone .chip.chip-wrong {
+      background-color: #b91c1c;
+      border-color: #f87171;
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 10px;
+    }
+    button {
+      flex: 1;
+      padding: 14px;
+      font-size: 1.05rem;
+      font-weight: 700;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+    .btn-submit {
+      background: var(--primary);
+      color: #fff;
+    }
+    .btn-reset {
+      flex: 0 0 85px;
+      background: #334155;
+      color: var(--text);
+    }
+    .btn-hint {
+      flex: 0 0 135px;
+      background: var(--hint);
+      color: #fff;
+    }
+    .btn-hint:disabled {
+      background: #475569;
+      color: #94a3b8;
+      cursor: not-allowed;
+    }
+
+    .feedback-box {
+      margin-top: 16px;
+      padding: 14px;
+      border-radius: 8px;
+      display: none;
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+    .feedback-box.perfect {
+      background-color: #064e3b;
+      color: #a7f3d0;
+      border: 1px solid #059669;
+      display: block;
+    }
+    .feedback-box.partial {
+      background-color: #713f12;
+      color: #fef08a;
+      border: 1px solid #ca8a04;
+      display: block;
+    }
+    .feedback-box.miss {
+      background-color: #7f1d1d;
+      color: #fecaca;
+      border: 1px solid #dc2626;
+      display: block;
+    }
+
+    /* 結果画面 */
+    .result-screen {
+      text-align: center;
+      padding: 30px 10px;
+    }
+    .result-icon {
+      font-size: 5rem;
+      margin-bottom: 12px;
+    }
+    .result-title {
+      font-size: 2rem;
+      font-weight: 800;
+      margin-bottom: 12px;
+    }
+    .result-desc {
+      font-size: 1.1rem;
+      color: var(--text-sub);
+      margin-bottom: 24px;
+      line-height: 1.6;
+    }
+    .btn-action {
+      background: var(--primary);
+      color: white;
+      max-width: 280px;
+      margin: 0 auto;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- 単元選択画面 -->
+  <div id="selectScreen" class="screen active">
+    <div class="title-banner">
+      <h1>文法討伐クエスト</h1>
+      <p style="color:var(--text-sub);">討伐する敵を選択してください（各20問プールから8問ランダム出題）</p>
+    </div>
+    <div class="stage-grid" id="stageGrid"></div>
+  </div>
+
+  <!-- バトル画面 -->
+  <div id="battleScreen" class="screen">
+    <div class="battle-header">
+      <span id="targetLabel" style="font-weight: 700; color: var(--accent);">Stage</span>
+      <span class="turn-counter" id="turnDisplay">残り: 8問</span>
+    </div>
+
+    <div class="boss-area">
+      <div class="boss-avatar" id="bossAvatar">👾</div>
+      <div class="boss-name" id="bossName">Grammar Boss</div>
+      <div class="hp-container">
+        <div class="hp-bar" id="bossHpBar"></div>
+      </div>
+      <div class="hp-text" id="bossHpText">HP: 200 / 200</div>
+    </div>
+
+    <div class="prompt-box">
+      <p class="japanese-text" id="jpQuestionText">日本語文</p>
+    </div>
+
+    <div class="hint-box" id="hintBox"></div>
+
+    <div class="section-label">回答欄（文頭は自動大文字化 / タップで解除）</div>
+    <div class="drop-zone" id="answerZone"></div>
+
+    <div class="section-label">語群（小文字表示・タップして並べる）</div>
+    <div class="word-bank" id="poolZone"></div>
+
+    <div class="btn-row">
+      <button class="btn-reset" id="resetBtn">リセット</button>
+      <button class="btn-hint" id="hintBtn">ヒント (3)</button>
+      <button class="btn-submit" id="attackBtn">攻撃する！</button>
+    </div>
+
+    <div class="feedback-box" id="feedback"></div>
+  </div>
+
+  <!-- 結果画面 -->
+  <div id="resultScreen" class="screen result-screen">
+    <div class="result-icon" id="resultIcon">🏆</div>
+    <div class="result-title" id="resultTitle">STAGE CLEAR!</div>
+    <p class="result-desc" id="resultDesc">エネミーを撃破しました！</p>
+    <button class="btn-action" id="returnBtn">ステージ選択へ戻る</button>
+  </div>
+
+</div>
+
+<script>
+  // 固有名詞および代名詞 "I"（言語名・国名・人名を含む）
+  const PROPER_NOUNS = new Set(["I", "Ken", "Tom", "Lucy", "Emi", "Bob", "Mike", "Mary", "English", "Japan", "Tokyo", "Paris", "London", "Canada", "Monday", "Sunday"]);
+
+  // 各単元20問収録（計220問・高1基礎レベル4〜7語程度）
+  const stageData = [
+    {
+      id: "tense",
+      title: "時制のクロノス",
+      grammar: "時制（現在・過去・進行・未来）",
+      icon: "⏳",
+      endMark: ".",
+      questions: [
+        { jp: "ケンは毎朝走る。", correct: ["Ken", "runs", "every", "morning"], hint: "三人称単数の s (runs) に注目しましょう。", exp: "日課や習慣は「現在形」で表します。" },
+        { jp: "私は今、テレビを見ています。", correct: ["I", "am", "watching", "TV", "now"], hint: "<am + -ing> の順で作ります。", exp: "現在行われている動作は「現在進行形」です。" },
+        { jp: "彼女は昨日、公園へ行きました。", correct: ["She", "went", "to", "the", "park", "yesterday"], hint: "go の過去形 went を使います。", exp: "過去の動作は過去形 went で表します。" },
+        { jp: "彼はその時、本を読んでいました。", correct: ["He", "was", "reading", "a", "book", "then"], hint: "過去の進行形は <was + -ing> です。", exp: "過去のある瞬間の動作は「過去進行形」です。" },
+        { jp: "明日雨が降るでしょう。", correct: ["It", "will", "rain", "tomorrow"], hint: "未来を表す助動詞 will を動詞の前に入れます。", exp: "未来の推測は <will + 原形> です。" },
+        { jp: "私たちは今夜、テニスをする予定です。", correct: ["We", "are", "going", "to", "play", "tennis", "tonight"], hint: "<are going to + 原形> を並べます。", exp: "前からの予定は <be going to + 原形> で表現します。" },
+        { jp: "もし明日晴れたら、出かけよう。", correct: ["If", "it", "is", "fine", "tomorrow", "let's", "go", "out"], hint: "if の節の中では未来のことでも現在形 is にします。", exp: "条件を表す副詞節内では未来のことでも現在形になります。" },
+        { jp: "私が電話したとき、トムは寝ていた。", correct: ["Tom", "was", "sleeping", "when", "I", "called"], hint: "was sleeping の後に when 節を繋げます。", exp: "過去進行形と接続詞 when の組み合わせです。" },
+        { jp: "父は毎週末、車を洗います。", correct: ["My", "father", "washes", "his", "car", "on", "weekends"], hint: "三人称単数形の washes に注意。", exp: "習慣的な動作を表す現在形です。" },
+        { jp: "彼らは川で泳いでいました。", correct: ["They", "were", "swimming", "in", "the", "river"], hint: "複数主語なので were swimming です。", exp: "過去進行形 <were + -ing> です。" },
+        { jp: "エミは来週、東京を訪れる予定です。", correct: ["Emi", "will", "visit", "Tokyo", "next", "week"], hint: "未来の予定を表す will visit です。", exp: "未来を表す助動詞 will です。" },
+        { jp: "私たちは昨夜、音楽を聴きました。", correct: ["We", "listened", "to", "music", "last", "night"], hint: "listened to のセットを思い出しましょう。", exp: "過去の行為を表す過去形です。" },
+        { jp: "彼女は今、ピアノを練習しています。", correct: ["She", "is", "practicing", "the", "piano", "now"], hint: "現在進行形 <is practicing> です。", exp: "今行われている動作は進行形にします。" },
+        { jp: "太陽は東から昇ります。", correct: ["The", "sun", "rises", "in", "the", "east"], hint: "不変の真理なので現在形 rises です。", exp: "自然の摂理・真理は常に現在形です。" },
+        { jp: "雨がやんだら、私たちは出発します。", correct: ["When", "it", "stops", "raining", "we", "will", "leave"], hint: "when節の中は現在形 stops にします。", exp: "時を表す副詞節内では現在形を用います。" },
+        { jp: "トムは昨日、新しい靴を買いました。", correct: ["Tom", "bought", "new", "shoes", "yesterday"], hint: "buy の過去形は bought です。", exp: "不規則動詞の過去形です。" },
+        { jp: "私は明日、忙しいでしょう。", correct: ["I", "will", "be", "busy", "tomorrow"], hint: "will の後ろは原形 be です。", exp: "助動詞 will + 原形 be です。" },
+        { jp: "子どもたちは庭で遊んでいます。", correct: ["The", "children", "are", "playing", "in", "the", "garden"], hint: "複数名詞 children に合わせて are です。", exp: "主語とbe動詞の一致に注意した進行形です。" },
+        { jp: "母が帰ってきたとき、私は料理をしていました。", correct: ["I", "was", "cooking", "when", "mother", "came", "home"], hint: "was cooking の後に when 節を続けます。", exp: "過去進行形と過去形の組み合わせです。" },
+        { jp: "電車は5分後に出発します。", correct: ["The", "train", "leaves", "in", "five", "minutes"], hint: "確定した時刻表の予定は現在形 leaves で表せます。", exp: "確実な予定を表す現在形です。" }
+      ]
+    },
+    {
+      id: "perfect",
+      title: "完了形のウロボロス",
+      grammar: "完了形（現在・過去完了）",
+      icon: "♾️",
+      endMark: ".",
+      questions: [
+        { jp: "私は宿題を終えたところです。", correct: ["I", "have", "just", "finished", "my", "homework"], hint: "just は have と finished の間に挟みます。", exp: "「ちょうど〜した」は <have just + 過去分詞> です。" },
+        { jp: "私は3年間ずっと日本に住んでいます。", correct: ["I", "have", "lived", "in", "Japan", "for", "three", "years"], hint: "have lived の後に場所・期間を並べます。", exp: "状態の継続を表す現在完了形です。" },
+        { jp: "今までにその映画を見たことがありますか。", correct: ["Have", "you", "ever", "seen", "the", "movie"], hint: "Have you ever で疑問文を始めます。", exp: "経験をたずねる <Have you ever + 過去分詞 ... ?> です。" },
+        { jp: "ケンは財布を失くしてしまった（今もない）。", correct: ["Ken", "has", "lost", "his", "wallet"], hint: "主語が Ken なので has lost になります。", exp: "「結果（今も手元にない）」を表す完了形です。" },
+        { jp: "私たちは以前、彼に会ったことがあります。", correct: ["We", "have", "met", "him", "before"], hint: "have met の後に him を置きます。", exp: "「以前〜したことがある」という経験の用法です。" },
+        { jp: "彼は2時間ずっと泳ぎ続けています。", correct: ["He", "has", "been", "swimming", "for", "two", "hours"], hint: "<has been -ing> を組み立てます。", exp: "動作の継続を表す「現在完了進行形」です。" },
+        { jp: "私が着いたとき、電車はすでに出てしまっていた。", correct: ["The", "train", "had", "already", "left", "when", "I", "arrived"], hint: "過去よりも前の出来事なので had already left です。", exp: "過去の一点より前に起きたことは「過去完了 (had + 過去分詞)」です。" },
+        { jp: "彼女はまだ部屋を掃除していません。", correct: ["She", "has", "not", "cleaned", "her", "room", "yet"], hint: "yet は文の最後に配置します。", exp: "現在完了の否定文では yet（まだ）を文末に置きます。" },
+        { jp: "私はすでに朝食を食べました。", correct: ["I", "have", "already", "eaten", "breakfast"], hint: "already は have と eaten の間です。", exp: "完了を表す現在完了形です。" },
+        { jp: "あなたは今までにパリへ行ったことがありますか。", correct: ["Have", "you", "ever", "been", "to", "Paris"], hint: "「〜へ行ったことがある」は been to です。", exp: "経験を表す <have been to 〜> です。" },
+        { jp: "トムは先週からずっと病気です。", correct: ["Tom", "has", "been", "sick", "since", "last", "week"], hint: "「〜以来」は since を使います。", exp: "状態の継続を表す since の用法です。" },
+        { jp: "雨は1時間ずっと降り続いています。", correct: ["It", "has", "been", "raining", "for", "an", "hour"], hint: "<has been raining> です。", exp: "現在完了進行形です。" },
+        { jp: "私は一度も馬に乗ったことがありません。", correct: ["I", "have", "never", "ridden", "a", "horse"], hint: "never は have の直後に置きます。", exp: "経験の否定を表す never です。" },
+        { jp: "彼女はカナダへ行ってしまった（今ここにはいない）。", correct: ["She", "has", "gone", "to", "Canada"], hint: "「行ってしまっていま居ない」は has gone to です。", exp: "完了・結果を表す <have gone to 〜> です。" },
+        { jp: "私たちは子どもの頃からお互いを知っています。", correct: ["We", "have", "known", "each", "other", "since", "childhood"], hint: "know は進行形にせず have known です。", exp: "状態の継続を表す現在完了形です。" },
+        { jp: "私は以前この歌を聴いたことがあります。", correct: ["I", "have", "heard", "this", "song", "before"], hint: "have heard の順です。", exp: "経験を表す用法です。" },
+        { jp: "彼らはちょうど宿題を終えたところです。", correct: ["They", "have", "just", "finished", "their", "homework"], hint: "have just finished を作ります。", exp: "完了を表す用法です。" },
+        { jp: "父が帰宅したとき、私はすでに寝ていました。", correct: ["I", "had", "already", "gone", "to", "bed", "when", "father", "came"], hint: "過去より前のことなので had already gone です。", exp: "過去完了形です。" },
+        { jp: "彼は何回その本を読みましたか。", correct: ["How", "many", "times", "has", "he", "read", "the", "book"], hint: "How many times で疑問文を始めます。", exp: "回数を尋ねる現在完了の疑問文です。" },
+        { jp: "彼女は午後からずっとピアノを弾いています。", correct: ["She", "has", "been", "playing", "the", "piano", "since", "noon"], hint: "has been playing を作ります。", exp: "動作の継続を表す現在完了進行形です。" }
+      ]
+    },
+    {
+      id: "modal",
+      title: "助動詞のキメラ",
+      grammar: "助動詞（基本・推量・過去の推量）",
+      icon: "🦁",
+      endMark: ".",
+      questions: [
+        { jp: "あなたは今、帰宅してもよい。", correct: ["You", "may", "go", "home", "now"], hint: "許可を表す may を使います。", exp: "許可（〜してもよい）は <may + 原形> です。" },
+        { jp: "その話は本当であるはずがない。", correct: ["The", "story", "cannot", "be", "true"], hint: "「〜のはずがない」は cannot be です。", exp: "強い否定の推量は <cannot + 原形> です。" },
+        { jp: "彼は疲れているに違いない。", correct: ["He", "must", "be", "tired"], hint: "「〜に違いない」は must be です。", exp: "確信のある推量は <must + 原形> です。" },
+        { jp: "私たちはもっと早く寝るべきだ。", correct: ["We", "should", "go", "to", "bed", "earlier"], hint: "「〜すべき」は should を使います。", exp: "助言・義務は <should + 原形> です。" },
+        { jp: "雨が降るかもしれません。", correct: ["It", "might", "rain", "later"], hint: "控えめな推量の might を動詞の前に置きます。", exp: "可能性・推量は <might + 原形> で表します。" },
+        { jp: "彼女は昨日、忙しかったのかもしれない。", correct: ["She", "may", "have", "been", "busy", "yesterday"], hint: "過去の推量は may have been です。", exp: "過去のことに対する推量は <may have + 過去分詞> です。" },
+        { jp: "私はもっと勉強するべきだった（のにしなかった）。", correct: ["I", "should", "have", "studied", "harder"], hint: "過去への後悔は should have studied です。", exp: "過去への後悔（〜すべきだった）は <should have + 過去分詞> です。" },
+        { jp: "明かりがついている。トムは起きているに違いない。", correct: ["The", "light", "is", "on", "Tom", "must", "be", "awake"], middlePeriodIndex: 3, hint: "2文構成です。「〜に違いない」は must be awake です。", exp: "確信の推量 must be を用いた文です。" },
+        { jp: "あなたはここに車を止めてはいけません。", correct: ["You", "must", "not", "park", "here"], hint: "強い禁止は must not です。", exp: "禁止を表す <must not + 原形> です。" },
+        { jp: "窓を開けてくれませんか。", correct: ["Will", "you", "open", "the", "window"], hint: "依頼は Will you ... ? で始めます。", exp: "依頼を表す表現です。" },
+        { jp: "私は昔、よく川で泳いだものだった。", correct: ["I", "would", "often", "swim", "in", "the", "river"], hint: "過去の習慣を表す would often です。", exp: "過去の不規則な習慣を表す助動詞 would です。" },
+        { jp: "君は今日来る必要はない。", correct: ["You", "do", "not", "have", "to", "come", "today"], hint: "不必要は do not have to です。", exp: "「〜する必要はない」は <do not have to> です。" },
+        { jp: "彼は電車に乗り遅れたのかもしれない。", correct: ["He", "might", "have", "missed", "the", "train"], hint: "過去の推量は might have missed です。", exp: "過去の推量 <might have + 過去分詞> です。" },
+        { jp: "私たちは先生の言うことを聞くべきです。", correct: ["We", "ought", "to", "listen", "to", "the", "teacher"], hint: "should と同義の ought to を使います。", exp: "義務・当然を表す <ought to + 原形> です。" },
+        { jp: "そんな噂は嘘であるはずがない。", correct: ["The", "rumor", "cannot", "be", "a", "lie"], hint: "cannot be a lie を作ります。", exp: "強い否定の推量です。" },
+        { jp: "彼女はすでに家に帰ったに違いない。", correct: ["She", "must", "have", "gone", "home", "already"], hint: "過去の確信は must have gone です。", exp: "過去に対する確信 <must have + 過去分詞> です。" },
+        { jp: "私はむしろ家にいたいです。", correct: ["I", "would", "rather", "stay", "at", "home"], hint: "「むしろ〜したい」は would rather です。", exp: "<would rather + 原形> です。" },
+        { jp: "手伝いましょうか。", correct: ["Shall", "I", "help", "you"], hint: "申し出は Shall I ... ? です。", exp: "相手への申し出を表す表現です。" },
+        { jp: "あなたは傘を持っていくべきだったのに。", correct: ["You", "should", "have", "taken", "an", "umbrella"], hint: "should have taken を作ります。", exp: "過去の後悔 <should have + 過去分詞> です。" },
+        { jp: "彼は今頃、ロンドンに到着しているはずだ。", correct: ["He", "should", "arrive", "in", "London", "by", "now"], hint: "当然の推量は should arrive です。", exp: "推量・当然を表す should です。" }
+      ]
+    },
+    {
+      id: "passive",
+      title: "受動態のゴーレム",
+      grammar: "受動態（基本・過去・進行・前置詞）",
+      icon: "🗿",
+      endMark: ".",
+      questions: [
+        { jp: "英語はこの学校で教えられています。", correct: ["English", "is", "taught", "at", "this", "school"], hint: "teach の過去分詞は taught です。", exp: "基本の受動態 <be動詞 + 過去分詞> です。" },
+        { jp: "この部屋は昨日、掃除されました。", correct: ["This", "room", "was", "cleaned", "yesterday"], hint: "過去のことなので was cleaned です。", exp: "過去の受動態は <was/were + 過去分詞> です。" },
+        { jp: "その本はトムによって書かれました。", correct: ["The", "book", "was", "written", "by", "Tom"], hint: "「〜によって」は by Tom です。", exp: "行為者は <by + 名詞> で表します。" },
+        { jp: "その車は今、洗車されているところです。", correct: ["The", "car", "is", "being", "washed", "now"], hint: "進行形の受動態は <is being + 過去分詞> です。", exp: "受動態の進行形 <be動詞 + being + 過去分詞> です。" },
+        { jp: "私たちはその知らせに驚きました。", correct: ["We", "were", "surprised", "at", "the", "news"], hint: "「〜に驚く」は were surprised at です。", exp: "感情の受動態 <be surprised at 〜> です。" },
+        { jp: "その犬はポチと名付けられました。", correct: ["The", "dog", "was", "named", "Pochi"], hint: "was named の後ろに名前を置きます。", exp: "第5文型 (name A B) の受動態です。" },
+        { jp: "その赤ちゃんは母に世話をされました。", correct: ["The", "baby", "was", "taken", "care", "of", "by", "mother"], hint: "taken care of の of を落とさないようにします。", exp: "群動詞 take care of の受動態です。" },
+        { jp: "富士山は雪で覆われています。", correct: ["Mt", "Fuji", "is", "covered", "with", "snow"], hint: "「〜で覆われている」は is covered with です。", exp: "前置詞 with を用いる受動態表現です。" },
+        { jp: "この手紙は昨日、送られました。", correct: ["This", "letter", "was", "sent", "yesterday"], hint: "send の過去分詞は sent です。", exp: "過去の受動態です。" },
+        { jp: "私の自転車は盗まれました。", correct: ["My", "bicycle", "was", "stolen"], hint: "steal の過去分詞は stolen です。", exp: "被害を表す受動態です。" },
+        { jp: "その歌は多くの若者に愛されています。", correct: ["The", "song", "is", "loved", "by", "many", "young", "people"], hint: "is loved by の順です。", exp: "受動態の基本形です。" },
+        { jp: "その新しい橋は来月、開通します。", correct: ["The", "new", "bridge", "will", "be", "opened", "next", "month"], hint: "未来の受動態は will be opened です。", exp: "未来の受動態 <will be + 過去分詞> です。" },
+        { jp: "その猫はミケと呼ばれています。", correct: ["The", "cat", "is", "called", "Mike"], hint: "is called の後ろに名前を置きます。", exp: "call A B の受動態です。" },
+        { jp: "その星は肉眼で見ることができます。", correct: ["The", "star", "can", "be", "seen", "with", "the", "naked", "eye"], hint: "助動詞の受動態は can be seen です。", exp: "<助動詞 + be + 過去分詞> です。" },
+        { jp: "その家は木で作られています。", correct: ["The", "house", "is", "made", "of", "wood"], hint: "材料が見て分かる場合は made of です。", exp: "<be made of 〜> (〜で作られている) です。" },
+        { jp: "チーズは牛乳から作られます。", correct: ["Cheese", "is", "made", "from", "milk"], hint: "原料が変質している場合は made from です。", exp: "<be made from 〜> です。" },
+        { jp: "彼は友人に笑われました。", correct: ["He", "was", "laughed", "at", "by", "his", "friends"], hint: "laughed at by と前置詞を続けます。", exp: "群動詞 laugh at の受動態です。" },
+        { jp: "その部屋は今、使われています。", correct: ["The", "room", "is", "being", "used", "now"], hint: "進行形の受動態 is being used です。", exp: "受動態進行形です。" },
+        { jp: "私たちはその結果に満足しました。", correct: ["We", "were", "pleased", "with", "the", "result"], hint: "「〜に満足する」は were pleased with です。", exp: "<be pleased with 〜> です。" },
+        { jp: "その門は毎晩閉められます。", correct: ["The", "gate", "is", "closed", "every", "night"], hint: "is closed の順です。", exp: "日常的な受動の動作です。" }
+      ]
+    },
+    {
+      id: "infinitive",
+      title: "不定詞のタイタン",
+      grammar: "不定詞（名詞的・副詞的・形容詞的・形式主語）",
+      icon: "🏛️",
+      endMark: ".",
+      questions: [
+        { jp: "英語を話すことは簡単です。", correct: ["It", "is", "easy", "to", "speak", "English"], hint: "形式主語 It is easy ... の後に to speak を置きます。", exp: "<It is ... to + 動詞の原形> の構文です。" },
+        { jp: "私は何か飲むものが欲しい。", correct: ["I", "want", "something", "to", "drink"], hint: "something を to drink が後ろから修飾します。", exp: "不定詞の形容詞的用法（〜するための）です。" },
+        { jp: "彼は本を買うために店へ行きました。", correct: ["He", "went", "to", "the", "store", "to", "buy", "a", "book"], hint: "「買うために」は to buy です。", exp: "目的（〜するために）を表す副詞的用法です。" },
+        { jp: "私は次に何をすべきか分かりません。", correct: ["I", "do", "not", "know", "what", "to", "do", "next"], hint: "「何をすべきか」は what to do です。", exp: "疑問詞 + to 不定詞の表現です。" },
+        { jp: "彼がその試験に受かるのは簡単です。", correct: ["It", "is", "easy", "for", "him", "to", "pass"], hint: "意味上の主語は for him です。", exp: "不定詞の意味上の主語は <for + 人> で示します。" },
+        { jp: "親切にも助けてくれてありがとう。", correct: ["It", "is", "kind", "of", "you", "to", "help", "me"], hint: "人の性質を表す形容詞 (kind) なので of you です。", exp: "性質を表す形容詞では <of + 人> になります。" },
+        { jp: "私は遅刻しないように約束しました。", correct: ["I", "promised", "not", "to", "be", "late"], hint: "not は to の直前に置きます。", exp: "不定詞の否定は <not to + 原形> です。" },
+        { jp: "彼女はあまりに疲れていて走れませんでした。", correct: ["She", "was", "too", "tired", "to", "run"], hint: "<too ... to 〜> で「あまりに…なので〜できない」です。", exp: "定番構文 <too ... to 〜> です。" },
+        { jp: "私の夢は先生になることです。", correct: ["My", "dream", "is", "to", "become", "a", "teacher"], hint: "保護になる to become です。", exp: "名詞的用法の不定詞です。" },
+        { jp: "私は今日、するべきたくさんの宿題があります。", correct: ["I", "have", "a", "lot", "of", "homework", "to", "do", "today"], hint: "homework を to do が修飾します。", exp: "形容詞的用法です。" },
+        { jp: "彼女はあなたに会えてとても嬉しがっていました。", correct: ["She", "was", "glad", "to", "see", "you"], hint: "感情の原因を表す to see です。", exp: "感情の原因を表す副詞的用法です。" },
+        { jp: "私に駅への行き方を教えてください。", correct: ["Tell", "me", "how", "to", "get", "to", "the", "station"], hint: "「行き方」は how to get です。", exp: "<how to + 原形> です。" },
+        { jp: "彼は医者になるために一生懸命勉強しました。", correct: ["He", "studied", "hard", "to", "be", "a", "doctor"], hint: "目的を表す to be です。", exp: "副詞的用法（目的）です。" },
+        { jp: "私たちは滞在するためのホテルを見つけました。", correct: ["We", "found", "a", "hotel", "to", "stay", "at"], hint: "stay at の at を落とさないようにします。", exp: "前置詞を伴う形容詞的用法です。" },
+        { jp: "彼女は親切にも私を手伝ってくれました。", correct: ["She", "was", "kind", "enough", "to", "help", "me"], hint: "kind enough to help の順です。", exp: "<形容詞 + enough to + 原形> です。" },
+        { jp: "彼らに再び会うことは不可能です。", correct: ["It", "is", "impossible", "to", "meet", "them", "again"], hint: "It is impossible to meet です。", exp: "形式主語構文です。" },
+        { jp: "父は私に部屋を掃除するように言いました。", correct: ["My", "father", "told", "me", "to", "clean", "my", "room"], hint: "tell + 人 + to 原形 です。", exp: "<tell + 人 + to + 原形> です。" },
+        { jp: "母は私に一人で出かけないよう言いました。", correct: ["Mother", "told", "me", "not", "to", "go", "out", "alone"], hint: "not to go の順です。", exp: "否定の不定詞構文です。" },
+        { jp: "私は彼に本当のことを言ってほしい。", correct: ["I", "want", "him", "to", "tell", "the", "truth"], hint: "want + 人 + to 原形 です。", exp: "<want + 人 + to + 原形> です。" },
+        { jp: "実を言うと、私はそれを知りませんでした。", correct: ["To", "tell", "the", "truth", "I", "did", "not", "know", "it"], hint: "文頭に To tell the truth を置きます。", exp: "独立不定詞です。" }
+      ]
+    },
+    {
+      id: "gerund",
+      title: "動名詞のヒドラ",
+      grammar: "動名詞（主語・目的語・前置詞の目的語）",
+      icon: "🐍",
+      endMark: ".",
+      questions: [
+        { jp: "テニスをすることはとても楽しい。", correct: ["Playing", "tennis", "is", "a", "lot", "of", "fun"], hint: "Playing tennis を主語にします。", exp: "動名詞（〜すること）が主語になっています。" },
+        { jp: "私は本を読み終えました。", correct: ["I", "finished", "reading", "the", "book"], hint: "finish の後ろは動名詞 reading です。", exp: "finish は動名詞のみを目的語にとる動詞です。" },
+        { jp: "窓を開けてもいいですか。", correct: ["Would", "you", "mind", "opening", "the", "window"], hint: "mind の後ろは opening です。", exp: "mind は動名詞を目的語にとります。" },
+        { jp: "彼はテレビゲームをするのが好きです。", correct: ["He", "enjoys", "playing", "video", "games"], hint: "enjoy の後ろは playing です。", exp: "enjoy の目的語は動名詞 (-ing) です。" },
+        { jp: "私はあなたに会えるのを楽しみにしています。", correct: ["I", "am", "looking", "forward", "to", "seeing", "you"], hint: "to は前置詞なので後ろは seeing です。", exp: "<look forward to -ing> の表現です。" },
+        { jp: "ケンは英語を話すのが得意です。", correct: ["Ken", "is", "good", "at", "speaking", "English"], hint: "前置詞 at の後ろに speaking を置きます。", exp: "前置詞の後ろには動名詞を置きます。" },
+        { jp: "私たちは夕食を食べることをあきらめた。", correct: ["We", "gave", "up", "having", "dinner"], hint: "gave up の後ろに having を続けます。", exp: "give up の目的語は動名詞になります。" },
+        { jp: "私は映画を見に行きたい気分です。", correct: ["I", "feel", "like", "going", "to", "the", "movies"], hint: "<feel like -ing> で「〜したい気分だ」です。", exp: "慣用表現 <feel like -ing> です。" },
+        { jp: "彼はお金を失うのを避けた。", correct: ["He", "avoided", "losing", "money"], hint: "avoid の後ろは losing です。", exp: "avoid は動名詞のみを目的語にとります。" },
+        { jp: "彼らは練習するのをやめました。", correct: ["They", "stopped", "practicing"], hint: "「〜するのをやめる」は stop -ing です。", exp: "stop + 動名詞の用法です。" },
+        { jp: "朝早く起きることは健康的です。", correct: ["Getting", "up", "early", "is", "healthy"], hint: "Getting up early を主語にします。", exp: "動名詞句の主語です。" },
+        { jp: "私は手紙を投函したのを覚えています。", correct: ["I", "remember", "posting", "the", "letter"], hint: "過去に「したこと」は remember -ing です。", exp: "<remember + -ing> です。" },
+        { jp: "私は昨夜、彼に電話したのを忘れていました。", correct: ["I", "forgot", "calling", "him", "last", "night"], hint: "過去にしたことは forgot calling です。", exp: "<forget + -ing> です。" },
+        { jp: "彼はその試験に落ちるのを恐れています。", correct: ["He", "is", "afraid", "of", "failing", "the", "exam"], hint: "前置詞 of の後ろに failing です。", exp: "前置詞 + 動名詞です。" },
+        { jp: "彼は怒るのを我慢できませんでした。", correct: ["He", "could", "not", "help", "getting", "angry"], hint: "<cannot help -ing> (〜せずにはいられない) です。", exp: "慣用表現 <cannot help -ing> です。" },
+        { jp: "牛乳をこぼして泣いても無駄です。", correct: ["It", "is", "no", "use", "crying", "over", "spilt", "milk"], hint: "It is no use crying です。", exp: "<It is no use -ing> です。" },
+        { jp: "彼は一人で住むことに慣れています。", correct: ["He", "is", "used", "to", "living", "alone"], hint: "<be used to -ing> (慣れている) です。", exp: "慣れを表す動名詞構文です。" },
+        { jp: "彼女はパーティーに行くことを提案しました。", correct: ["She", "suggested", "going", "to", "the", "party"], hint: "suggest の目的語は going です。", exp: "suggest + 動名詞です。" },
+        { jp: "私を手伝ってくれてありがとう。", correct: ["Thank", "you", "for", "helping", "me"], hint: "for helping me の順です。", exp: "前置詞 for + 動名詞です。" },
+        { jp: "この本は読む価値があります。", correct: ["This", "book", "is", "worth", "reading"], hint: "<be worth -ing> (〜する価値がある) です。", exp: "慣用表現 <be worth -ing> です。" }
+      ]
+    },
+    {
+      id: "participle",
+      title: "分詞のスペクター",
+      grammar: "分詞（修飾・文型・分詞構文）",
+      icon: "👻",
+      endMark: ".",
+      questions: [
+        { jp: "あそこで走っている少年はトムです。", correct: ["The", "boy", "running", "over", "there", "is", "Tom"], hint: "The boy を running over there が修飾します。", exp: "現在分詞 (-ing) の後置修飾です。" },
+        { jp: "これは日本で作られた車です。", correct: ["This", "is", "a", "car", "made", "in", "Japan"], hint: "a car を made in Japan が修飾します。", exp: "過去分詞 (made) による後置修飾です。" },
+        { jp: "私はドアに鍵をかけたままにしておいた。", correct: ["I", "kept", "the", "door", "locked"], hint: "kept the door locked の順です。", exp: "<keep + O + 過去分詞> の構文です。" },
+        { jp: "彼が歌っているのを私は聞きました。", correct: ["I", "heard", "him", "singing"], hint: "heard の後ろに him singing を置きます。", exp: "知覚動詞 <hear + O + -ing> です。" },
+        { jp: "私は財布を盗まれました。", correct: ["I", "had", "my", "wallet", "stolen"], hint: "被害を表す had my wallet stolen です。", exp: "<have + O + 過去分詞> で被害を表します。" },
+        { jp: "彼女は腕を組んで座っていた。", correct: ["She", "sat", "with", "her", "arms", "folded"], hint: "付帯状況の with her arms folded です。", exp: "<with + 名詞 + 過去分詞> の付帯状況です。" },
+        { jp: "右へ曲がると、その駅が見えますよ。", correct: ["Turning", "right", "you", "will", "see", "the", "station"], hint: "分詞構文 Turning right で文を始めます。", exp: "条件を表す分詞構文です。" },
+        { jp: "その知らせを聞いて、ケンは微笑んだ。", correct: ["Hearing", "the", "news", "Ken", "smiled"], hint: "Hearing the news で始めます。", exp: "時を表す分詞構文です。" },
+        { jp: "私はベンチで眠っている猫を見つけました。", correct: ["I", "found", "a", "cat", "sleeping", "on", "the", "bench"], hint: "a cat を sleeping on the bench で修飾します。", exp: "現在分詞の後置修飾です。" },
+        { jp: "彼らは壊れた窓を見ました。", correct: ["They", "saw", "the", "broken", "window"], hint: "「壊れた」は過去分詞 broken です。", exp: "過去分詞の前置修飾です。" },
+        { jp: "私は誰かが私の名前を呼ぶのを聞きました。", correct: ["I", "heard", "someone", "calling", "my", "name"], hint: "heard someone calling です。", exp: "知覚動詞の構文です。" },
+        { jp: "彼は目を閉じたまま音楽を聴いていました。", correct: ["He", "listened", "to", "music", "with", "his", "eyes", "closed"], hint: "with his eyes closed の順です。", exp: "付帯状況の with です。" },
+        { jp: "英語で書かれたその手紙は長かった。", correct: ["The", "letter", "written", "in", "English", "was", "long"], hint: "written in English が letter を修飾します。", exp: "過去分詞による後置修飾です。" },
+        { jp: "何を言えばよいか分からず、私は黙っていました。", correct: ["Not", "knowing", "what", "to", "say", "I", "kept", "silent"], hint: "否定の分詞構文は Not knowing で始めます。", exp: "否定の分詞構文です。" },
+        { jp: "空から見ると、その島は船のように見えました。", correct: ["Seen", "from", "the", "sky", "the", "island", "looked", "like", "a", "ship"], hint: "受動の分詞構文 Seen from です。", exp: "過去分詞の分詞構文です。" },
+        { jp: "彼は髪を切ってもらいました。", correct: ["He", "had", "his", "hair", "cut"], hint: "had his hair cut の順です。", exp: "使役・受身を表す have です。" },
+        { jp: "通りを歩いているとき、私はルーシーに会いました。", correct: ["Walking", "along", "the", "street", "I", "met", "Lucy"], hint: "Walking along で始めます。", exp: "時を表す分詞構文です。" },
+        { jp: "あそこで手を振っている少女は私の妹です。", correct: ["The", "girl", "waving", "over", "there", "is", "my", "sister"], hint: "The girl waving over there です。", exp: "現在分詞の修飾です。" },
+        { jp: "私は車を修理してもらいました。", correct: ["I", "got", "my", "car", "repaired"], hint: "got my car repaired です。", exp: "<get + O + 過去分詞> です。" },
+        { jp: "疲れていたので、彼は早く寝ました。", correct: ["Feeling", "tired", "he", "went", "to", "bed", "early"], hint: "理由を表す Feeling tired で始めます。", exp: "理由を表す分詞構文です。" }
+      ]
+    },
+    {
+      id: "rel-pronoun",
+      title: "関係代名詞のグリフォン",
+      grammar: "関係代名詞（who・which・that・whose）",
+      icon: "🦅",
+      endMark: ".",
+      questions: [
+        { jp: "私にはカナダに住んでいる友人がいます。", correct: ["I", "have", "a", "friend", "who", "lives", "in", "Canada"], hint: "人 (a friend) を修飾するので who を使います。", exp: "人を先行詞とする主格の関係代名詞 who です。" },
+        { jp: "これは私のおじによって作られた机です。", correct: ["This", "is", "the", "desk", "which", "my", "uncle", "made"], hint: "物 (the desk) を修飾するので which を使います。", exp: "物を先行詞とする目的格の関係代名詞 which です。" },
+        { jp: "昨日私を助けてくれた少女はルーシーです。", correct: ["The", "girl", "who", "helped", "me", "yesterday", "is", "Lucy"], hint: "The girl who helped me を主語にします。", exp: "主格の関係代名詞節が主語を修飾しています。" },
+        { jp: "私は髪が長いその少女を知っています。", correct: ["I", "know", "the", "girl", "whose", "hair", "is", "long"], hint: "所有関係を表す whose hair を使います。", exp: "所有格の関係代名詞 whose です。" },
+        { jp: "これは私が大好きな本です。", correct: ["This", "is", "the", "book", "that", "I", "like", "best"], hint: "that I like best で the book を修飾します。", exp: "関係代名詞 that を用いた修飾です。" },
+        { jp: "彼が言ったことは本当でした。", correct: ["What", "he", "said", "was", "true"], hint: "「彼が言ったこと」は What he said です。", exp: "「〜すること」を表す関係代名詞 what です。" },
+        { jp: "私はトムが買ったそのケーキを食べました。", correct: ["I", "ate", "the", "cake", "which", "Tom", "bought"], hint: "the cake を which Tom bought で修飾します。", exp: "目的格の関係代名詞 which です。" },
+        { jp: "ピアノを弾いているその女性を見てごらん。", correct: ["Look", "at", "the", "woman", "who", "is", "playing", "the", "piano"], hint: "the woman の後ろに who is playing ... を続けます。", exp: "主格の関係代名詞 who です。" },
+        { jp: "私には英語を上手に話す兄がいます。", correct: ["I", "have", "a", "brother", "who", "speaks", "English", "well"], hint: "a brother who speaks です。", exp: "主格の関係代名詞 who です。" },
+        { jp: "あれは海に向かって走る電車です。", correct: ["That", "is", "the", "train", "which", "runs", "to", "the", "sea"], hint: "the train which runs です。", exp: "物を先行詞とする主格の which です。" },
+        { jp: "これは私が昨日失くしたペンです。", correct: ["This", "is", "the", "pen", "which", "I", "lost", "yesterday"], hint: "the pen which I lost です。", exp: "目的格の関係代名詞です。" },
+        { jp: "屋根が赤いあの家を見てごらん。", correct: ["Look", "at", "the", "house", "whose", "roof", "is", "red"], hint: "所有格 whose roof です。", exp: "所有格 whose です。" },
+        { jp: "彼が欲しがっているものは高価です。", correct: ["What", "he", "wants", "is", "expensive"], hint: "What he wants を主語にします。", exp: "関係代名詞 what です。" },
+        { jp: "ケンが書いた手紙はとても親切でした。", correct: ["The", "letter", "which", "Ken", "wrote", "was", "very", "kind"], hint: "The letter which Ken wrote です。", exp: "主語を修飾する目的格の関係代名詞です。" },
+        { jp: "私は昨日訪ねてきたその男の人を知っています。", correct: ["I", "know", "the", "man", "who", "visited", "us", "yesterday"], hint: "the man who visited です。", exp: "主格の who です。" },
+        { jp: "彼らはその部屋にいた少年たちです。", correct: ["They", "are", "the", "boys", "who", "were", "in", "the", "room"], hint: "the boys who were です。", exp: "主格の who です。" },
+        { jp: "これは私が一番好きな映画です。", correct: ["This", "is", "the", "movie", "that", "I", "like", "most"], hint: "that I like most です。", exp: "関係代名詞 that です。" },
+        { jp: "彼女が言ったことは私を驚かせました。", correct: ["What", "she", "said", "surprised", "me"], hint: "What she said が主語です。", exp: "関係代名詞 what の主語節です。" },
+        { jp: "私は車が故障したその男性を助けました。", correct: ["I", "helped", "the", "man", "whose", "car", "broke", "down"], hint: "the man whose car です。", exp: "所有格 whose です。" },
+        { jp: "私たちが昨日泊まったホテルは素敵でした。", correct: ["The", "hotel", "which", "we", "stayed", "at", "was", "nice"], hint: "stayed at の前置詞 at に注意。", exp: "前置詞の目的語となる which です。" }
+      ]
+    },
+    {
+      id: "rel-adverb",
+      title: "関係副詞のワイバーン",
+      grammar: "関係副詞（where・when・why・how）",
+      icon: "🦇",
+      endMark: ".",
+      questions: [
+        { jp: "ここは私が生まれた町です。", correct: ["This", "is", "the", "town", "where", "I", "was", "born"], hint: "場所を表す the town を where で修飾します。", exp: "場所を修飾する関係副詞 where です。" },
+        { jp: "日曜日が私の大好きな曜日です。", correct: ["Sunday", "is", "the", "day", "when", "I", "feel", "happy"], hint: "時を表す the day を when で修飾します。", exp: "時を修飾する関係副詞 when です。" },
+        { jp: "彼が遅刻した理由を教えてください。", correct: ["Tell", "me", "the", "reason", "why", "he", "was", "late"], hint: "理由 the reason を why で修飾します。", exp: "理由を修飾する関係副詞 why です。" },
+        { jp: "このようにして彼はその問題を解きました。", correct: ["This", "is", "how", "he", "solved", "the", "problem"], hint: "「このようにして〜した」は This is how ... です。", exp: "方法を表す関係副詞 how です。" },
+        { jp: "私たちは彼らに初めて会った日を覚えています。", correct: ["We", "remember", "the", "day", "when", "we", "first", "met", "them"], hint: "the day を when we first met them で修飾します。", exp: "時を表す関係副詞 when です。" },
+        { jp: "あれがケンが働いている店です。", correct: ["That", "is", "the", "shop", "where", "Ken", "works"], hint: "the shop を where Ken works で修飾します。", exp: "場所を表す関係副詞 where です。" },
+        { jp: "それが彼女が怒っている理由です。", correct: ["That", "is", "why", "she", "is", "angry"], hint: "That is why で文を始めます。", exp: "「そういうわけで〜だ」を表す That is why です。" },
+        { jp: "今こそ君がベストを尽くすべき時です。", correct: ["Now", "is", "the", "time", "when", "you", "should", "try"], hint: "the time when you should try の順です。", exp: "時を表す関係副詞 when です。" },
+        { jp: "ここは私たちが初めて会った公園です。", correct: ["This", "is", "the", "park", "where", "we", "first", "met"], hint: "the park where we first met です。", exp: "場所を表す関係副詞 where です。" },
+        { jp: "私は彼が日本に来た年を覚えています。", correct: ["I", "remember", "the", "year", "when", "he", "came", "to", "Japan"], hint: "the year when he came です。", exp: "時を表す関係副詞 when です。" },
+        { jp: "彼女が泣いていた理由を誰も知りません。", correct: ["Nobody", "knows", "the", "reason", "why", "she", "was", "crying"], hint: "the reason why she was crying です。", exp: "理由を表す関係副詞 why です。" },
+        { jp: "これが私がケーキを作った方法です。", correct: ["This", "is", "how", "I", "made", "the", "cake"], hint: "This is how I made です。", exp: "方法を表す関係副詞 how です。" },
+        { jp: "あれがトムが住んでいる家です。", correct: ["That", "is", "the", "house", "where", "Tom", "lives"], hint: "the house where Tom lives です。", exp: "場所の関係副詞 where です。" },
+        { jp: "夏は私たちが海へ行く季節です。", correct: ["Summer", "is", "the", "season", "when", "we", "go", "to", "the", "sea"], hint: "the season when we go です。", exp: "時の関係副詞 when です。" },
+        { jp: "あなたがそのクラブに入った理由を教えてください。", correct: ["Tell", "me", "the", "reason", "why", "you", "joined", "the", "club"], hint: "the reason why you joined です。", exp: "理由の関係副詞 why です。" },
+        { jp: "そのようにして私たちは勝ったのです。", correct: ["That", "is", "how", "we", "won", "the", "game"], hint: "That is how we won です。", exp: "方法を表す That is how です。" },
+        { jp: "ここは私が勉強する部屋です。", correct: ["This", "is", "the", "room", "where", "I", "study"], hint: "the room where I study です。", exp: "場所の関係副詞です。" },
+        { jp: "私は学校が始まる時間を知っています。", correct: ["I", "know", "the", "time", "when", "school", "starts"], hint: "the time when school starts です。", exp: "時の関係副詞です。" },
+        { jp: "それが彼が立ち去った理由です。", correct: ["That", "is", "the", "reason", "why", "he", "left"], hint: "the reason why he left です。", exp: "理由の関係副詞です。" },
+        { jp: "彼らはそのようにして駅を見つけました。", correct: ["That", "is", "how", "they", "found", "the", "station"], hint: "That is how they found です。", exp: "方法を表す関係副詞です。" }
+      ]
+    },
+    {
+      id: "comparison",
+      title: "比較のケルベロス",
+      grammar: "比較（as...as・比較級・最上級）",
+      icon: "🐕‍🦺",
+      endMark: ".",
+      questions: [
+        { jp: "ケンはトムと同じくらい背が高い。", correct: ["Ken", "is", "as", "tall", "as", "Tom"], hint: "<as + 原級 + as> を使います。", exp: "同等比較を表す <as + 形容詞 + as> です。" },
+        { jp: "この本はあの本よりも面白いです。", correct: ["This", "book", "is", "more", "interesting", "than", "that", "one"], hint: "interesting の比較級は more interesting です。", exp: "長めの形容詞の比較級は more をつけます。" },
+        { jp: "富士山は日本で最も高い山です。", correct: ["Mt", "Fuji", "is", "the", "highest", "mountain", "in", "Japan"], hint: "最上級の the highest を使います。", exp: "最上級 <the + 最上級 + in/of> です。" },
+        { jp: "トムはケンよりもずっと速く走ります。", correct: ["Tom", "runs", "much", "faster", "than", "Ken"], hint: "比較級 faster を強めるために直前に much を置きます。", exp: "比較級の強調には much を用います。" },
+        { jp: "私の部屋はあなたの部屋の2倍の広さです。", correct: ["My", "room", "is", "twice", "as", "large", "as", "yours"], hint: "倍数詞 twice を as large as の前に置きます。", exp: "倍数表現 <倍数詞 + as + 原級 + as> です。" },
+        { jp: "できるだけ速く走ってください。", correct: ["Please", "run", "as", "fast", "as", "you", "can"], hint: "<as fast as you can> で並べます。", exp: "「できるだけ速く」を表す定型表現です。" },
+        { jp: "彼はクラスの中で一番背が高い少年です。", correct: ["He", "is", "the", "tallest", "boy", "in", "his", "class"], hint: "the tallest boy の順です。", exp: "最上級の基本構文です。" },
+        { jp: "冬は秋よりもずっと寒いです。", correct: ["Winter", "is", "much", "colder", "than", "autumn"], hint: "much colder than autumn を並べます。", exp: "比較級 colder と強調語 much の組み合わせです。" },
+        { jp: "この犬はあの猫と同じくらい大きいです。", correct: ["This", "dog", "is", "as", "big", "as", "that", "cat"], hint: "as big as です。", exp: "原級比較 <as ... as> です。" },
+        { jp: "彼女は私よりも若いです。", correct: ["She", "is", "younger", "than", "I"], hint: "younger than I (me) です。", exp: "基本の比較級です。" },
+        { jp: "彼は家族の中で最も年上です。", correct: ["He", "is", "the", "oldest", "in", "his", "family"], hint: "the oldest in his family です。", exp: "最上級の表現です。" },
+        { jp: "健康は富よりも重要です。", correct: ["Health", "is", "more", "important", "than", "wealth"], hint: "more important than です。", exp: "形容詞 important の比較級です。" },
+        { jp: "私の犬はあなたの犬の3倍重いです。", correct: ["My", "dog", "is", "three", "times", "as", "heavy", "as", "yours"], hint: "three times as heavy as です。", exp: "倍数表現です。" },
+        { jp: "できるだけ早く私に電話してください。", correct: ["Call", "me", "as", "soon", "as", "possible"], hint: "as soon as possible です。", exp: "「できるだけ早く」の表現です。" },
+        { jp: "光は音よりも速いです。", correct: ["Light", "is", "faster", "than", "sound"], hint: "faster than sound です。", exp: "基本的な比較級です。" },
+        { jp: "この川は日本で一番長いです。", correct: ["This", "river", "is", "the", "longest", "in", "Japan"], hint: "the longest in Japan です。", exp: "場所の中での最上級 (in) です。" },
+        { jp: "英語は数学と同じくらい役に立ちます。", correct: ["English", "is", "as", "useful", "as", "math"], hint: "as useful as です。", exp: "原級比較です。" },
+        { jp: "彼女はクラスの他のどの少女よりも速く走ります。", correct: ["She", "runs", "faster", "than", "any", "other", "girl"], hint: "faster than any other girl (単数形) です。", exp: "<比較級 + than any other + 単数名詞> です。" },
+        { jp: "高ければ高いほど、より寒くなります。", correct: ["The", "higher", "we", "go", "the", "colder", "it", "gets"], hint: "The higher ..., the colder ... です。", exp: "<the 比較級, the 比較級> です。" },
+        { jp: "これはすべての中で最も良い方法です。", correct: ["This", "is", "the", "best", "way", "of", "all"], hint: "the best way of all です。", exp: "所属・同類の中での最上級 (of all) です。" }
+      ]
+    },
+    {
+      id: "subjunctive",
+      title: "仮定法のバジリスク",
+      grammar: "仮定法（仮定法過去・wish）",
+      icon: "🦎",
+      endMark: ".",
+      questions: [
+        { jp: "もし私にお金があれば、それを買うことができるのに。", correct: ["If", "I", "had", "money", "I", "could", "buy", "it"], hint: "現在の願望なので過去形 had と could buy を使います。", exp: "現在の事実に反する仮定法過去です。" },
+        { jp: "もし私が鳥なら、あなたのところへ飛んでいけるのに。", correct: ["If", "I", "were", "a", "bird", "I", "could", "fly", "to", "you"], hint: "仮定法過去の be動詞は were を用います。", exp: "定番の仮定法過去の形です。" },
+        { jp: "もっと時間があればいいのになあ。", correct: ["I", "wish", "I", "had", "more", "time"], hint: "I wish の後ろを過去形 had にします。", exp: "<I wish + 仮定法過去> で「〜ならいいのに」を表します。" },
+        { jp: "もし暇があれば、私はあなたを手伝うだろう。", correct: ["If", "I", "were", "free", "I", "would", "help", "you"], hint: "were free と would help を使います。", exp: "仮定法過去の基本構文です。" },
+        { jp: "彼女はまるで何でも知っているかのように話す。", correct: ["She", "talks", "as", "if", "she", "knew", "everything"], hint: "as if の後ろは過去形 knew です。", exp: "<as if + 過去形> で「まるで〜であるかのように」です。" },
+        { jp: "もし水がなければ、私たちは生きられないだろう。", correct: ["Without", "water", "we", "could", "not", "live"], hint: "Without water で文を始めます。", exp: "Without 〜 (もし〜がなければ) を使った仮定法です。" },
+        { jp: "彼がここにいればいいのになあ。", correct: ["I", "wish", "he", "were", "here"], hint: "I wish he were here の順です。", exp: "実現しそうにない現在の願望を表す I wish です。" },
+        { jp: "もう寝る時間ですよ。", correct: ["It", "is", "time", "you", "went", "to", "bed"], hint: "It is time の後ろは過去形 went にします。", exp: "<It is time + 過去形> で「もう〜する時間だ」です。" },
+        { jp: "もし晴れていたら、私たちはテニスをするだろうに。", correct: ["If", "it", "were", "sunny", "we", "would", "play", "tennis"], hint: "were sunny と would play です。", exp: "仮定法過去の用法です。" },
+        { jp: "私があなたの立場なら、そうしないだろう。", correct: ["If", "I", "were", "you", "I", "would", "not", "do", "so"], hint: "If I were you で始めます。", exp: "「もし私があなたなら」の定型句です。" },
+        { jp: "ピアノが弾ければいいのになあ。", correct: ["I", "wish", "I", "could", "play", "the", "piano"], hint: "I wish I could play です。", exp: "能力への願望 <I wish I could ...> です。" },
+        { jp: "彼はまるで先生であるかのように振る舞います。", correct: ["He", "acts", "as", "if", "he", "were", "a", "teacher"], hint: "as if he were です。", exp: "<as if + 仮定法過去> です。" },
+        { jp: "太陽がなければ、生命は存在しないだろう。", correct: ["Without", "the", "sun", "there", "would", "be", "no", "life"], hint: "Without the sun で始めます。", exp: "Without を用いた仮定法です。" },
+        { jp: "もし車を持っていたら、ドライブに行くのに。", correct: ["If", "I", "had", "a", "car", "I", "would", "go", "for", "a", "drive"], hint: "had a car と would go です。", exp: "現在の事実に反する仮定法です。" },
+        { jp: "もっと背が高ければいいのになあ。", correct: ["I", "wish", "I", "were", "taller"], hint: "I wish I were taller です。", exp: "容姿・状態への願望です。" },
+        { jp: "もう学校へ行く時間ですよ。", correct: ["It", "is", "time", "we", "went", "to", "school"], hint: "went to school と過去形にします。", exp: "<It is time + 過去形> です。" },
+        { jp: "もし彼の電話番号を知っていれば、電話するのに。", correct: ["If", "I", "knew", "his", "number", "I", "would", "call", "him"], hint: "knew his number と would call です。", exp: "仮定法過去です。" },
+        { jp: "雨が降っていなければいいのになあ。", correct: ["I", "wish", "it", "were", "not", "raining"], hint: "were not raining です。", exp: "天候への願望を表す仮定法です。" },
+        { jp: "彼女はまるで幽霊を見たかのように見えます。", correct: ["She", "looks", "as", "if", "she", "saw", "a", "ghost"], hint: "as if she saw です。", exp: "as if 構文です。" },
+        { jp: "君の助けがなければ、私は困るだろう。", correct: ["Without", "your", "help", "I", "would", "be", "in", "trouble"], hint: "Without your help で始めます。", exp: "Without の仮定表現です。" }
+      ]
+    }
+  ];
+
+  const BOSS_MAX_HP = 200;
+  const MAX_TURNS = 8;
+  const MAX_HINTS = 3;
+
+  let currentStage = null;
+  let currentHp = BOSS_MAX_HP;
+  let remainingTurns = MAX_TURNS;
+  let remainingHints = MAX_HINTS;
+  let questionIdx = 0;
+  let sessionQuestions = [];
+
+  let answerTokens = [];
+  let poolTokens = [];
+
+  // DOM
+  const selectScreen = document.getElementById("selectScreen");
+  const battleScreen = document.getElementById("battleScreen");
+  const resultScreen = document.getElementById("resultScreen");
+
+  const stageGrid = document.getElementById("stageGrid");
+  const targetLabel = document.getElementById("targetLabel");
+  const turnDisplay = document.getElementById("turnDisplay");
+  const bossAvatar = document.getElementById("bossAvatar");
+  const bossName = document.getElementById("bossName");
+  const bossHpBar = document.getElementById("bossHpBar");
+  const bossHpText = document.getElementById("bossHpText");
+
+  const jpQuestionText = document.getElementById("jpQuestionText");
+  const hintBox = document.getElementById("hintBox");
+  const answerZone = document.getElementById("answerZone");
+  const poolZone = document.getElementById("poolZone");
+  const attackBtn = document.getElementById("attackBtn");
+  const resetBtn = document.getElementById("resetBtn");
+  const hintBtn = document.getElementById("hintBtn");
+  const feedback = document.getElementById("feedback");
+
+  const resultIcon = document.getElementById("resultIcon");
+  const resultTitle = document.getElementById("resultTitle");
+  const resultDesc = document.getElementById("resultDesc");
+  const returnBtn = document.getElementById("returnBtn");
+
+  function shuffle(arr) {
+    const res = [...arr];
+    for (let i = res.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [res[i], res[j]] = [res[j], res[i]];
+    }
+    return res;
+  }
+
+  // 表示用フォーマット（生徒の画面に見せる文字）
+  function formatDisplayWord(rawWord, isSentenceStart) {
+    // 固有名詞や代名詞 "I" は常に大文字
+    for (let proper of PROPER_NOUNS) {
+      if (proper.toLowerCase() === rawWord.toLowerCase()) {
+        return proper;
+      }
+    }
+    // 文頭なら先頭を大文字化
+    if (isSentenceStart) {
+      return rawWord.charAt(0).toUpperCase() + rawWord.slice(1).toLowerCase();
+    }
+    return rawWord.toLowerCase();
+  }
+
+  function isStartOfSentence(pos, currentQ) {
+    if (pos === 0) return true;
+    if (currentQ && typeof currentQ.middlePeriodIndex === "number") {
+      if (pos === currentQ.middlePeriodIndex + 1) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function initStageGrid() {
+    stageGrid.innerHTML = "";
+    stageData.forEach(stage => {
+      const card = document.createElement("div");
+      card.className = "stage-card";
+      card.innerHTML = `
+        <div class="monster-icon">${stage.icon}</div>
+        <div class="stage-card-info">
+          <h3>${stage.title}</h3>
+          <p>${stage.grammar}</p>
+        </div>
+      `;
+      card.addEventListener("click", () => startBattle(stage));
+      stageGrid.appendChild(card);
+    });
+  }
+
+  function startBattle(stage) {
+    currentStage = stage;
+    currentHp = BOSS_MAX_HP;
+    remainingTurns = MAX_TURNS;
+    remainingHints = MAX_HINTS;
+    questionIdx = 0;
+
+    // 20問プールから8問をランダム抽出
+    sessionQuestions = shuffle(stage.questions).slice(0, MAX_TURNS);
+
+    bossAvatar.textContent = stage.icon;
+    bossName.textContent = stage.title;
+    targetLabel.textContent = `TARGET: ${stage.grammar}`;
+
+    updateHpUi();
+    updateTurnUi();
+    updateHintBtnUi();
+
+    selectScreen.classList.remove("active");
+    resultScreen.classList.remove("active");
+    battleScreen.classList.add("active");
+
+    loadTurn();
+  }
+
+  function updateHpUi() {
+    const percent = Math.max(0, Math.ceil((currentHp / BOSS_MAX_HP) * 100));
+    bossHpBar.style.width = percent + "%";
+    bossHpText.textContent = `HP: ${currentHp} / ${BOSS_MAX_HP}`;
+
+    if (percent > 50) {
+      bossHpBar.style.backgroundColor = "var(--hp-green)";
+    } else if (percent > 20) {
+      bossHpBar.style.backgroundColor = "var(--hp-yellow)";
+    } else {
+      bossHpBar.style.backgroundColor = "var(--hp-red)";
+    }
+  }
+
+  function updateTurnUi() {
+    turnDisplay.textContent = `残り問題数: ${remainingTurns}問`;
+  }
+
+  function updateHintBtnUi() {
+    hintBtn.textContent = `ヒント (${remainingHints})`;
+    hintBtn.disabled = remainingHints <= 0;
+  }
+
+  function loadTurn() {
+    feedback.className = "feedback-box";
+    feedback.innerHTML = "";
+    hintBox.className = "hint-box";
+    hintBox.innerHTML = "";
+    attackBtn.textContent = "攻撃する！";
+
+    const q = sessionQuestions[questionIdx];
+    jpQuestionText.textContent = q.jp;
+
+    answerTokens = [];
+    poolTokens = shuffle(q.correct.map((word, id) => ({ id, rawText: word })));
+    renderTokens();
+  }
+
+  function renderTokens(evaluation = null) {
+    const q = sessionQuestions[questionIdx];
+    answerZone.innerHTML = "";
+
+    answerTokens.forEach((tok, pos) => {
+      const chip = document.createElement("div");
+      chip.className = "chip";
+
+      // 画面表示は文頭大文字化・固有名詞を整形
+      const isStart = isStartOfSentence(pos, q);
+      chip.textContent = formatDisplayWord(tok.rawText, isStart);
+
+      if (evaluation) {
+        if (evaluation.posCorrect[pos]) {
+          chip.classList.add("chip-correct");
+        } else {
+          chip.classList.add("chip-wrong");
+        }
+      }
+
+      chip.addEventListener("click", () => {
+        if (attackBtn.textContent === "次の問題へ") return;
+        const [removed] = answerTokens.splice(pos, 1);
+        poolTokens.push(removed);
+        renderTokens();
+      });
+
+      answerZone.appendChild(chip);
+
+      if (q && typeof q.middlePeriodIndex === "number" && pos === q.middlePeriodIndex) {
+        const midMark = document.createElement("span");
+        midMark.className = "sentence-end-mark";
+        midMark.textContent = ".";
+        answerZone.appendChild(midMark);
+      }
+    });
+
+    const endMark = document.createElement("span");
+    endMark.className = "sentence-end-mark";
+    endMark.textContent = currentStage.endMark || ".";
+    answerZone.appendChild(endMark);
+
+    // 語群レンダリング（全小文字）
+    poolZone.innerHTML = "";
+    poolTokens.forEach((tok, pos) => {
+      const chip = document.createElement("div");
+      chip.className = "chip";
+      chip.textContent = tok.rawText.toLowerCase();
+      chip.addEventListener("click", () => {
+        if (attackBtn.textContent === "次の問題へ") return;
+        const [removed] = poolTokens.splice(pos, 1);
+        answerTokens.push(removed);
+        renderTokens();
+      });
+      poolZone.appendChild(chip);
+    });
+  }
+
+  resetBtn.addEventListener("click", () => {
+    if (attackBtn.textContent === "次の問題へ") return;
+    const q = sessionQuestions[questionIdx];
+    answerTokens = [];
+    poolTokens = shuffle(q.correct.map((word, id) => ({ id, rawText: word })));
+    renderTokens();
+  });
+
+  hintBtn.addEventListener("click", () => {
+    if (remainingHints <= 0) return;
+    if (hintBox.classList.contains("show")) return;
+
+    const q = sessionQuestions[questionIdx];
+    remainingHints--;
+    updateHintBtnUi();
+
+    hintBox.innerHTML = `💡 <strong>ヒント:</strong> ${q.hint || "主語と動詞の並びに注目しましょう。"}`;
+    hintBox.classList.add("show");
+  });
+
+  // 最長共通部分列 (LCS) 計算（小文字正規化して比較）
+  function computeLcsLength(arr1, arr2) {
+    const m = arr1.length;
+    const n = arr2.length;
+    const dp = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
+
+    for (let i = 0; i < m; i++) {
+      for (let j = 0; j < n; j++) {
+        if (arr1[i].toLowerCase() === arr2[j].toLowerCase()) {
+          dp[i + 1][j + 1] = dp[i][j] + 1;
+        } else {
+          dp[i + 1][j + 1] = Math.max(dp[i + 1][j], dp[i][j + 1]);
+        }
+      }
+    }
+    return dp[m][n];
+  }
+
+  function buildCorrectDisplay(q) {
+    let res = "";
+    q.correct.forEach((w, idx) => {
+      res += w;
+      if (typeof q.middlePeriodIndex === "number" && idx === q.middlePeriodIndex) {
+        res += ". ";
+      } else if (idx < q.correct.length - 1) {
+        res += " ";
+      }
+    });
+    return res + (currentStage.endMark || ".");
+  }
+
+  // 攻撃・解答判定
+  attackBtn.addEventListener("click", () => {
+    if (attackBtn.textContent === "次の問題へ") {
+      questionIdx++;
+      loadTurn();
+      return;
+    }
+
+    const q = sessionQuestions[questionIdx];
+    const totalWords = q.correct.length;
+
+    if (answerTokens.length === 0) {
+      alert("単語をタップして並べてから攻撃してください！");
+      return;
+    }
+
+    remainingTurns--;
+    updateTurnUi();
+
+    // 【修正点】攻撃の判定ロジックではすべて小文字(toLowerCase)に正規化して比較
+    // これにより english / English 等の大文字小文字の差異による不正解を完全に排除
+    const userWordsRaw = answerTokens.map(t => t.rawText);
+    const correctWords = q.correct;
+
+    const posCorrect = userWordsRaw.map((w, idx) => {
+      if (!correctWords[idx]) return false;
+      return w.toLowerCase() === correctWords[idx].toLowerCase();
+    });
+
+    // 模範解答に合わせてユーザー解答の表示文字列を完全補正（English等）
+    answerTokens.forEach((tok, idx) => {
+      if (posCorrect[idx]) {
+        tok.rawText = correctWords[idx];
+      }
+    });
+
+    let exactMatches = 0;
+    userWordsRaw.forEach((w, i) => {
+      if (correctWords[i] && w.toLowerCase() === correctWords[i].toLowerCase()) {
+        exactMatches++;
+      }
+    });
+
+    const lcsMatches = computeLcsLength(userWordsRaw, correctWords);
+    const effectiveMatches = Math.max(exactMatches, lcsMatches);
+    const accuracyRatio = effectiveMatches / totalWords;
+
+    // 完全一致判定（小文字ベース）
+    const isFullMatch = userWordsRaw.length === totalWords &&
+      userWordsRaw.every((w, idx) => w.toLowerCase() === correctWords[idx].toLowerCase());
+
+    let damage = 0;
+    if (isFullMatch) {
+      damage = 40;
+    } else {
+      damage = Math.round(accuracyRatio * 30);
+    }
+
+    if (damage > 0) {
+      currentHp = Math.max(0, currentHp - damage);
+      updateHpUi();
+      bossAvatar.classList.add("damage");
+      setTimeout(() => bossAvatar.classList.remove("damage"), 400);
+    }
+
+    renderTokens({ posCorrect });
+
+    const correctSentence = buildCorrectDisplay(q);
+    if (damage >= 38) {
+      feedback.className = "feedback-box perfect";
+      feedback.innerHTML = `<strong>CRITICAL HIT!【完全一致】</strong> 敵に <strong>${damage}</strong> の特大ダメージ！<br>${q.exp}`;
+    } else if (damage > 0) {
+      feedback.className = "feedback-box partial";
+      feedback.innerHTML = `<strong>HIT!【部分命中】</strong> 語順の部分一致により <strong>${damage}</strong> のダメージ！<br>正解：<code>${correctSentence}</code><br>${q.exp}`;
+    } else {
+      feedback.className = "feedback-box miss";
+      feedback.innerHTML = `<strong>MISS!【攻撃不発】</strong> 語順が大きく異なっています。<br>正解：<code>${correctSentence}</code><br>${q.exp}`;
+    }
+
+    if (currentHp <= 0) {
+      setTimeout(() => showResult(true), 1000);
+      return;
+    }
+    if (remainingTurns <= 0) {
+      setTimeout(() => showResult(false), 1000);
+      return;
+    }
+
+    attackBtn.textContent = "次の問題へ";
+  });
+
+  function showResult(isWin) {
+    battleScreen.classList.remove("active");
+    resultScreen.classList.add("active");
+
+    if (isWin) {
+      resultIcon.textContent = "🏆";
+      resultTitle.textContent = "MISSION COMPLETE!";
+      resultTitle.style.color = "#4ade80";
+      resultDesc.textContent = `${currentStage.title} を討伐しました！\n文法事項「${currentStage.grammar}」の基礎がしっかり身についています。`;
+    } else {
+      resultIcon.textContent = "💀";
+      resultTitle.textContent = "QUEST FAILED";
+      resultTitle.style.color = "#f87171";
+      resultDesc.textContent = `規定問題数（${MAX_TURNS}問）を終了しましたが、敵のHPが残ってしまいました。\nヒントや解説を確認して再挑戦してみましょう！`;
+    }
+  }
+
+  returnBtn.addEventListener("click", () => {
+    resultScreen.classList.remove("active");
+    selectScreen.classList.add("active");
+  });
+
+  initStageGrid();
+</script>
+
+</body>
+</html>
